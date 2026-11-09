@@ -1,25 +1,16 @@
 <?php
-// Приём заявки с формы и отправка письма Марине.
+// Приём формы записи. Письмо уходит на почту Марины.
 header('Content-Type: application/json; charset=utf-8');
-$TO = 'marinaandreeva.psy@yandex.ru';           // куда слать заявки
-$FROM = 'noreply@marinaandreeva.ru';            // адрес отправителя на домене сайта
-
-if ($_SERVER['REQUEST_METHOD'] !== 'POST') { http_response_code(405); echo '{"ok":false}'; exit; }
-if (!empty($_POST['website'])) { echo '{"ok":true}'; exit; }   // ловушка для ботов
-if (empty($_POST['agree'])) { echo '{"ok":false}'; exit; }
-
-function clean($k, $max) {
-  $v = isset($_POST[$k]) ? trim((string)$_POST[$k]) : '';
-  $v = str_replace(["\r", "\0"], '', $v);
-  return mb_substr($v, 0, $max);
+$TO = 'marinaandreeva.psy@yandex.ru';
+$FROM = 'noreply@marinaandreeva.ru';
+if ($_SERVER['REQUEST_METHOD'] !== 'POST' || !empty($_POST['website'])) { echo json_encode(['ok' => false]); exit; }
+$rows = [];
+foreach (['Имя', 'Телефон', 'Куда лучше написать/позвонить?', 'Удобное время'] as $k) {
+  $key = str_replace([' ', '/', '?'], '_', $k);
+  $v = $_POST[$k] ?? $_POST[$key] ?? '';
+  $rows[] = $k . ': ' . mb_substr(trim(strip_tags($v)), 0, 1000);
 }
-$name = clean('name', 200); $phone = clean('phone', 40);
-$contact = clean('contact', 500); $time = clean('time', 200);
-if ($name === '' || $phone === '' || $contact === '' || $time === '') { echo '{"ok":false}'; exit; }
-
-$body = "Новая заявка с сайта\n\nИмя: $name\nТелефон: $phone\nКуда написать/позвонить: $contact\nУдобное время: $time\n"
-      . "\nСогласие на обработку ПД: да\nДата: " . date('d.m.Y H:i') . "\n";
-$headers = "From: $FROM\r\nContent-Type: text/plain; charset=UTF-8\r\n";
-$subject = '=?UTF-8?B?' . base64_encode('Заявка с сайта marinaandreeva.ru') . '?=';
-$sent = mail($TO, $subject, $body, $headers);
-echo $sent ? '{"ok":true}' : '{"ok":false}';
+$body = "Новая заявка с сайта\n\n" . implode("\n", $rows) . "\n";
+$headers = "From: $FROM\r\nContent-Type: text/plain; charset=utf-8";
+$ok = mail($TO, '=?UTF-8?B?' . base64_encode('Заявка с сайта') . '?=', $body, $headers);
+echo json_encode(['ok' => (bool)$ok]);

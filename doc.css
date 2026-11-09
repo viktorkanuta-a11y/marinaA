@@ -1,0 +1,5 @@
+body{margin:0;background:#fff;color:#111;font:16px/1.5 'Open Sans',Arial,sans-serif}
+.doc{max-width:860px;margin:0 auto;padding:32px 16px 64px}
+.doc a{color:#6c657e}
+.doc h1{font-family:'Ubuntu','Open Sans',Arial,sans-serif;font-weight:400;font-size:28px;line-height:1.2;color:#6c657e;margin:24px 0}
+.docblock{overflow-wrap:anywhere}
